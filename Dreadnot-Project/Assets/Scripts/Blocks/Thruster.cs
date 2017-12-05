@@ -14,8 +14,18 @@ public class Thruster : Block
 	public bool posNeg;
 	public int thrustGroup;
 
+	public override void OnShipDestroy()
+	{
+		base.OnShipDestroy();
+		burn.gameObject.SetActive(false);
+		burnLight.enabled=false;
+		thrustSource.enabled=false;
+		burnRend.enabled=false;
+	}
+
 	void Update()
 	{
+		base.Update();
 		time+=Time.deltaTime;
 		thrustSource.volume=Mathf.Lerp(0, volume, time);
 	}

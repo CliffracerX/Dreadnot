@@ -26,6 +26,13 @@ public class Weapon : Block
 		return q;
 	}
 
+	public override void OnShipDestroy()
+	{
+		base.OnShipDestroy();
+		head.gameObject.SetActive(false);
+		active=false;
+	}
+
 	public void Fire(bool on)
 	{
 		if(ft==FireType.Shot)
@@ -69,6 +76,7 @@ public class Weapon : Block
 
 	void Update()
 	{
+		base.Update();
 		lr.enabled=active;
 	}
 

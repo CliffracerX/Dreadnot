@@ -226,6 +226,22 @@ public class ShipScript : MonoBehaviour
 	public GUIStyle mainStyle,ammoStyle;
 	public Texture2D[] abilityIcons;
 	public Texture2D abilityIconOverlay;
+	public Vector3 blockAvg = Vector3.zero;
+
+	public Vector3 GetAvg()
+	{
+		if(blockAvg==Vector3.zero)
+		{
+			Vector3 avg = Vector3.zero;
+			foreach(Block b in blocks)
+			{
+				avg+=b.transform.localPosition;
+			}
+			avg = new Vector3(avg.x/blocks.Count, avg.y/blocks.Count, avg.z/blocks.Count);
+			blockAvg=avg;
+		}
+		return blockAvg;
+	}
 
 	public void Damage(float amount)
 	{
@@ -270,145 +286,155 @@ public class ShipScript : MonoBehaviour
 
 	void OnGUI()
 	{
-		PowerSystem ps = powerSys[seats[curSeat].powerSet];
-		GUI.color=Color.white;
-		GUI.DrawTexture(new Rect((Screen.width*0.1f), Screen.height/2-256, 32, 512), barBG);
-		GUI.DrawTexture(new Rect((Screen.width*0.1f), Screen.height/2-256+512, 32, 32), hullNote);
-		if((health*1.0f)/maxHealth<=0.5f)
+		if(!destroyed)
 		{
-			GUI.DrawTexture(new Rect((Screen.width*0.1f), Screen.height/2-256-32, 32, 32), warningNote);
-		}
-		GUI.DrawTexture(new Rect((Screen.width*0.9f)-32, Screen.height/2-256, 32, 512), barBG);
-		GUI.DrawTexture(new Rect((Screen.width*0.9f)-32, Screen.height/2-256+512, 32, 32), powerNote);
-		if((ps.energyStored*1.0f)/ps.energyMax<=0.5f)
-		{
-			GUI.DrawTexture(new Rect((Screen.width*0.9f)-32, Screen.height/2-256-32, 32, 32), warningNote);
-		}
-		GUI.color=shipColorMain;
-		int hbarH = (int)(510.0f*((health*1.0f)/maxHealth));
-		GUI.DrawTexture(new Rect((Screen.width*0.1f)+1, Screen.height/2-256+(510-hbarH)+1, 30, hbarH), barFG);
-		GUI.color=Color.white;
-		GUI.Label(new Rect((Screen.width*0.1f)-100, Screen.height/2-10, 100, 20), ((int)health)+"/"+((int)maxHealth), mainStyle);
-		GUI.color=shipColorPower;
-		int pbarH = (int)(510.0f*((((int)ps.energyStored)*1.0f)/ps.energyMax));
-		GUI.DrawTexture(new Rect((Screen.width*0.9f)-32+1, Screen.height/2-256+(510-pbarH)+1, 30, pbarH), barFG);
-		GUI.color=Color.white;
-		GUI.Label(new Rect((Screen.width*0.9f), Screen.height/2-10, 100, 20), ((int)ps.energyStored)+"/"+((int)ps.energyMax), mainStyle);
-		GUI.color=Color.white;
-		GUI.DrawTexture(new Rect((Screen.width*0.1f), Screen.height/2-256, 32, 512), barOverlay);
-		GUI.DrawTexture(new Rect((Screen.width*0.9f)-32, Screen.height/2-256, 32, 512), barOverlay);
-		WeaponPair thisWep = wp[seats[curSeat].weaponSet];
-		GUI.DrawTexture(new Rect((Screen.width*0.1f)+32, Screen.height/2-64, 16, 128), wepBarBG);
-		if((thisWep.ammo1*1.0f)/thisWep.ammoMax1<=0.5f)
-		{
-			GUI.DrawTexture(new Rect((Screen.width*0.1f)+32, Screen.height/2-64-16, 16, 16), wepBarWarning);
-		}
-		if(thisWep.reloading1)
-		{
-			GUI.DrawTexture(new Rect((Screen.width*0.1f)+32, Screen.height/2+64, 16, 16), wepBarReload);
-		}
-		GUI.DrawTexture(new Rect((Screen.width*0.9f)-32-16, Screen.height/2-64, 16, 128), wepBarBG);
-		if((thisWep.ammo2*1.0f)/thisWep.ammoMax2<=0.5f)
-		{
-			GUI.DrawTexture(new Rect((Screen.width*0.9f)-32-16, Screen.height/2-64-16, 16, 16), wepBarWarning);
-		}
-		if(thisWep.reloading2)
-		{
-			GUI.DrawTexture(new Rect((Screen.width*0.9f)-32-16, Screen.height/2+64, 16, 16), wepBarReload);
-		}
-		if(!thisWep.secondaryActive)
-		{
-			GUI.color=shipColorSpecial;
-		}
-		else
-		{
-			GUI.color=shipColorThrust;
-		}
-		int abar1H = (int)(126.0f*((thisWep.ammo1*1.0f)/thisWep.ammoMax1));
-		if(thisWep.reloading1)
-		{
-			abar1H = (int)(126.0f*(thisWep.reload1/thisWep.reloadSpeed1));
-		}
-		float cm1 = 1;
-		string t1 = "∞";
-		if(thisWep.ammoMax1!=0)
-		{
-			cm1=((thisWep.ammo1+(thisWep.ammoMax1/2))/thisWep.ammoMax1);
-			t1=thisWep.ammo1+"/"+thisWep.ammoMax1;
-		}
-		else
-		{
-			abar1H=126;
-		}
-		GUI.DrawTexture(new Rect((Screen.width*0.1f)+32+1, Screen.height/2-64+1+(126-abar1H), 14, abar1H), wepBarFG);
-		GUI.color=Color.white;
-		GUI.Label(new Rect((Screen.width*0.1f)+32+16, Screen.height/2-5, 50, 10), t1, ammoStyle);
-		if(thisWep.secondaryActive)
-		{
-			GUI.color=shipColorSpecial;
-		}
-		else
-		{
-			GUI.color=shipColorThrust;
-		}
-		int abar2H = (int)(126.0f*((thisWep.ammo2*1.0f)/thisWep.ammoMax2));
-		if(thisWep.reloading2)
-		{
-			abar2H = (int)(126.0f*(thisWep.reload2/thisWep.reloadSpeed2));
-		}
-		float cm2 = 1;
-		string t2 = "∞";
-		if(thisWep.ammoMax2!=0)
-		{
-			cm2=((thisWep.ammo2+(thisWep.ammoMax2/2))/thisWep.ammoMax2);
-			t2=thisWep.ammo2+"/"+thisWep.ammoMax2;
-		}
-		else
-		{
-			abar2H=126;
-		}
-		GUI.DrawTexture(new Rect((Screen.width*0.9f)-32-16+1, Screen.height/2-64+1+(126-abar2H), 14, abar2H), wepBarFG);
-		GUI.color=Color.white;
-		GUI.Label(new Rect((Screen.width*0.9f)-32-16-50, Screen.height/2-5, 50, 10), t2, ammoStyle);
-		crewmembers.Sort();
-		List<Crew> crewList = crewmembers;
-		int width = crewList.Count*crewTex.width;
-		for(int i = 0; i<crewList.Count; i++)
-		{
-			if(crewList[i].injured)
+			PowerSystem ps = powerSys[seats[curSeat].powerSet];
+			GUI.color=Color.white;
+			GUI.DrawTexture(new Rect((Screen.width*0.1f), Screen.height/2-256, 32, 512), barBG);
+			GUI.DrawTexture(new Rect((Screen.width*0.1f), Screen.height/2-256+512, 32, 32), hullNote);
+			if((health*1.0f)/maxHealth<=0.5f)
 			{
-				GUI.color=Color.white;
-				GUI.DrawTexture(new Rect((Screen.width/2)-(width/2)+(crewTex.width*i), Screen.height*0.1f, crewTex.width, crewTex.height), crewTexEmpty);
+				GUI.DrawTexture(new Rect((Screen.width*0.1f), Screen.height/2-256-32, 32, 32), warningNote);
+			}
+			GUI.DrawTexture(new Rect((Screen.width*0.9f)-32, Screen.height/2-256, 32, 512), barBG);
+			GUI.DrawTexture(new Rect((Screen.width*0.9f)-32, Screen.height/2-256+512, 32, 32), powerNote);
+			if((ps.energyStored*1.0f)/ps.energyMax<=0.5f)
+			{
+				GUI.DrawTexture(new Rect((Screen.width*0.9f)-32, Screen.height/2-256-32, 32, 32), warningNote);
+			}
+			GUI.color=shipColorMain;
+			int hbarH = (int)(510.0f*((health*1.0f)/maxHealth));
+			GUI.DrawTexture(new Rect((Screen.width*0.1f)+1, Screen.height/2-256+(510-hbarH)+1, 30, hbarH), barFG);
+			GUI.color=Color.white;
+			GUI.Label(new Rect((Screen.width*0.1f)-100, Screen.height/2-10, 100, 20), ((int)health)+"/"+((int)maxHealth), mainStyle);
+			GUI.color=shipColorPower;
+			int pbarH = (int)(510.0f*((((int)ps.energyStored)*1.0f)/ps.energyMax));
+			GUI.DrawTexture(new Rect((Screen.width*0.9f)-32+1, Screen.height/2-256+(510-pbarH)+1, 30, pbarH), barFG);
+			GUI.color=Color.white;
+			GUI.Label(new Rect((Screen.width*0.9f), Screen.height/2-10, 100, 20), ((int)ps.energyStored)+"/"+((int)ps.energyMax), mainStyle);
+			GUI.color=Color.white;
+			GUI.DrawTexture(new Rect((Screen.width*0.1f), Screen.height/2-256, 32, 512), barOverlay);
+			GUI.DrawTexture(new Rect((Screen.width*0.9f)-32, Screen.height/2-256, 32, 512), barOverlay);
+			WeaponPair thisWep = wp[seats[curSeat].weaponSet];
+			GUI.DrawTexture(new Rect((Screen.width*0.1f)+32, Screen.height/2-64, 16, 128), wepBarBG);
+			if((thisWep.ammo1*1.0f)/thisWep.ammoMax1<=0.5f)
+			{
+				GUI.DrawTexture(new Rect((Screen.width*0.1f)+32, Screen.height/2-64-16, 16, 16), wepBarWarning);
+			}
+			if(thisWep.reloading1)
+			{
+				GUI.DrawTexture(new Rect((Screen.width*0.1f)+32, Screen.height/2+64, 16, 16), wepBarReload);
+			}
+			GUI.DrawTexture(new Rect((Screen.width*0.9f)-32-16, Screen.height/2-64, 16, 128), wepBarBG);
+			if((thisWep.ammo2*1.0f)/thisWep.ammoMax2<=0.5f)
+			{
+				GUI.DrawTexture(new Rect((Screen.width*0.9f)-32-16, Screen.height/2-64-16, 16, 16), wepBarWarning);
+			}
+			if(thisWep.reloading2)
+			{
+				GUI.DrawTexture(new Rect((Screen.width*0.9f)-32-16, Screen.height/2+64, 16, 16), wepBarReload);
+			}
+			if(!thisWep.secondaryActive)
+			{
+				GUI.color=shipColorSpecial;
 			}
 			else
 			{
-				if(repairing)
+				GUI.color=shipColorThrust;
+			}
+			int abar1H = (int)(126.0f*((thisWep.ammo1*1.0f)/thisWep.ammoMax1));
+			if(thisWep.reloading1)
+			{
+				abar1H = (int)(126.0f*(thisWep.reload1/thisWep.reloadSpeed1));
+			}
+			float cm1 = 1;
+			string t1 = "∞";
+			if(thisWep.ammoMax1!=0)
+			{
+				cm1=((thisWep.ammo1+(thisWep.ammoMax1/2))/thisWep.ammoMax1);
+				t1=thisWep.ammo1+"/"+thisWep.ammoMax1;
+			}
+			else
+			{
+				abar1H=126;
+			}
+			GUI.DrawTexture(new Rect((Screen.width*0.1f)+32+1, Screen.height/2-64+1+(126-abar1H), 14, abar1H), wepBarFG);
+			GUI.color=Color.white;
+			GUI.Label(new Rect((Screen.width*0.1f)+32+16, Screen.height/2-5, 50, 10), t1, ammoStyle);
+			if(thisWep.secondaryActive)
+			{
+				GUI.color=shipColorSpecial;
+			}
+			else
+			{
+				GUI.color=shipColorThrust;
+			}
+			int abar2H = (int)(126.0f*((thisWep.ammo2*1.0f)/thisWep.ammoMax2));
+			if(thisWep.reloading2)
+			{
+				abar2H = (int)(126.0f*(thisWep.reload2/thisWep.reloadSpeed2));
+			}
+			float cm2 = 1;
+			string t2 = "∞";
+			if(thisWep.ammoMax2!=0)
+			{
+				cm2=((thisWep.ammo2+(thisWep.ammoMax2/2))/thisWep.ammoMax2);
+				t2=thisWep.ammo2+"/"+thisWep.ammoMax2;
+			}
+			else
+			{
+				abar2H=126;
+			}
+			GUI.DrawTexture(new Rect((Screen.width*0.9f)-32-16+1, Screen.height/2-64+1+(126-abar2H), 14, abar2H), wepBarFG);
+			GUI.color=Color.white;
+			GUI.Label(new Rect((Screen.width*0.9f)-32-16-50, Screen.height/2-5, 50, 10), t2, ammoStyle);
+			crewmembers.Sort();
+			List<Crew> crewList = crewmembers;
+			int width = crewList.Count*crewTex.width;
+			for(int i = 0; i<crewList.Count; i++)
+			{
+				if(crewList[i].injured)
 				{
-					GUI.color=shipColorPower;
+					GUI.color=Color.white;
+					GUI.DrawTexture(new Rect((Screen.width/2)-(width/2)+(crewTex.width*i), Screen.height*0.1f, crewTex.width, crewTex.height), crewTexEmpty);
 				}
 				else
 				{
-					GUI.color=shipColorMain;
+					if(repairing)
+					{
+						GUI.color=shipColorPower;
+					}
+					else
+					{
+						GUI.color=shipColorMain;
+					}
+					GUI.DrawTexture(new Rect((Screen.width/2)-(width/2)+(crewTex.width*i), Screen.height*0.1f, crewTex.width, crewTex.height), crewTex);
 				}
-				GUI.DrawTexture(new Rect((Screen.width/2)-(width/2)+(crewTex.width*i), Screen.height*0.1f, crewTex.width, crewTex.height), crewTex);
 			}
-		}
-		int[] ms = seats[curSeat].moduleSlots;
-		foreach(int i in ms)
-		{
-			GUI.color=Color.white;
-			GUI.DrawTexture(new Rect((Screen.width/2)-(abilityIcons[(int)slots[i].mtype].width*2)+(abilityIcons[(int)slots[i].mtype].width*i), Screen.height*0.9f, abilityIcons[(int)slots[i].mtype].width, abilityIcons[(int)slots[i].mtype].height), abilityIcons[(int)slots[i].mtype]);
-			if(slots[i].cooldown>0)
+			int[] ms = seats[curSeat].moduleSlots;
+			foreach(int i in ms)
 			{
-				GUI.color=shipColorPower;
-				int h1 = (int)(abilityIconOverlay.height*1.0f*(1-(slots[i].cooldown/(slots[i].modules[0].cooldown*slots[i].modCooldown))));
-				GUI.DrawTexture(new Rect((Screen.width/2)-(abilityIcons[(int)slots[i].mtype].width*2)+(abilityIcons[(int)slots[i].mtype].width*i)+1, Screen.height*0.9f+1+(abilityIconOverlay.height-h1), abilityIconOverlay.width, h1), abilityIconOverlay);
+				GUI.color=Color.white;
+				GUI.DrawTexture(new Rect((Screen.width/2)-(abilityIcons[(int)slots[i].mtype].width*2)+(abilityIcons[(int)slots[i].mtype].width*i), Screen.height*0.9f, abilityIcons[(int)slots[i].mtype].width, abilityIcons[(int)slots[i].mtype].height), abilityIcons[(int)slots[i].mtype]);
+				if(slots[i].cooldown>0)
+				{
+					GUI.color=shipColorPower;
+					int h1 = (int)(abilityIconOverlay.height*1.0f*(1-(slots[i].cooldown/(slots[i].modules[0].cooldown*slots[i].modCooldown))));
+					GUI.DrawTexture(new Rect((Screen.width/2)-(abilityIcons[(int)slots[i].mtype].width*2)+(abilityIcons[(int)slots[i].mtype].width*i)+1, Screen.height*0.9f+1+(abilityIconOverlay.height-h1), abilityIconOverlay.width, h1), abilityIconOverlay);
+				}
+				if(slots[i].runtime>0)
+				{
+					GUI.color=shipColorSpecial;
+					int h2 = (int)(abilityIconOverlay.height*1.0f*(1-(slots[i].runtime/(slots[i].modules[0].time*slots[i].modTime))));
+					GUI.DrawTexture(new Rect((Screen.width/2)-(abilityIcons[(int)slots[i].mtype].width*2)+(abilityIcons[(int)slots[i].mtype].width*i)+1, Screen.height*0.9f+1+h2, abilityIconOverlay.width, (abilityIconOverlay.height-h2)), abilityIconOverlay);
+				}
 			}
-			if(slots[i].runtime>0)
+			if(Cursor.visible)
 			{
-				GUI.color=shipColorSpecial;
-				int h2 = (int)(abilityIconOverlay.height*1.0f*(1-(slots[i].runtime/(slots[i].modules[0].time*slots[i].modTime))));
-				GUI.DrawTexture(new Rect((Screen.width/2)-(abilityIcons[(int)slots[i].mtype].width*2)+(abilityIcons[(int)slots[i].mtype].width*i)+1, Screen.height*0.9f+1+h2, abilityIconOverlay.width, (abilityIconOverlay.height-h2)), abilityIconOverlay);
+				if(GUI.Button(new Rect(Screen.width/2-256, 15, 512, 30), "SELF DESTRUCT"))
+				{
+					health=-maxHealth;
+				}
 			}
 		}
 	}
@@ -434,6 +460,7 @@ public class ShipScript : MonoBehaviour
 			{
 				crewmembers.Add(new Crew());
 			}
+			blocks.Add(b);
 		}
 		foreach(InertialDampener id in transform.GetComponentsInChildren<InertialDampener>())
 		{
@@ -486,206 +513,228 @@ public class ShipScript : MonoBehaviour
 		shipBody.angularDrag=aDrag;
 	}
 
+	public bool destroyed = false;
+	public float lifetime = 5;
+
 	void Update()
 	{
-		Quaternion q = Quaternion.FromToRotation(transform.up, Vector3.up);
-		shipBody.AddTorque(new Vector3(q.x, q.y, q.z)*dampenSpeed);
-		timeSinceDamage+=Time.deltaTime;
-		if(health<maxHealth && timeSinceDamage>=repairDelay)
+		if(!destroyed)
 		{
-			repairing=true;
-		}
-		if(Input.GetButtonUp("WeaponSwap"))
-		{
-			wp[seats[curSeat].weaponSet].secondaryActive=!wp[seats[curSeat].weaponSet].secondaryActive;
-		}
-		if(Input.GetButtonUp("Module1"))
-		{
-			ModuleSlot mod = slots[seats[curSeat].moduleSlots[0]];
-			if(mod.cooldown<=0)
+			Quaternion q = Quaternion.FromToRotation(transform.up, Vector3.up);
+			shipBody.AddTorque(new Vector3(q.x, q.y, q.z)*dampenSpeed);
+			timeSinceDamage+=Time.deltaTime;
+			if(health<maxHealth && timeSinceDamage>=repairDelay)
 			{
-				mod.cooldown=mod.modules[0].cooldown*mod.modCooldown;
-				mod.runtime=mod.modules[0].time*mod.modTime;
+				repairing=true;
 			}
-		}
-		if(Input.GetButtonUp("Module2"))
-		{
-			ModuleSlot mod = slots[seats[curSeat].moduleSlots[1]];
-			if(mod.cooldown<=0)
+			if(Input.GetButtonUp("WeaponSwap"))
 			{
-				mod.cooldown=mod.modules[0].cooldown*mod.modCooldown;
-				mod.runtime=mod.modules[0].time*mod.modTime;
+				wp[seats[curSeat].weaponSet].secondaryActive=!wp[seats[curSeat].weaponSet].secondaryActive;
 			}
-		}
-		if(Input.GetButtonUp("Module3"))
-		{
-			ModuleSlot mod = slots[seats[curSeat].moduleSlots[2]];
-			if(mod.cooldown<=0)
+			if(Input.GetButtonUp("Module1"))
 			{
-				mod.cooldown=mod.modules[0].cooldown*mod.modCooldown;
-				mod.runtime=mod.modules[0].time*mod.modTime;
-			}
-		}
-		if(Input.GetButtonUp("Module4"))
-		{
-			ModuleSlot mod = slots[seats[curSeat].moduleSlots[3]];
-			if(mod.cooldown<=0)
-			{
-				mod.cooldown=mod.modules[0].cooldown*mod.modCooldown;
-				mod.runtime=mod.modules[0].time*mod.modTime;
-			}
-		}
-		foreach(ModuleSlot ms in slots)
-		{
-			ms.cooldown-=Time.deltaTime;
-			if(ms.runtime>0)
-			{
-				ms.runtime-=Time.deltaTime;
-				if(ms.mtype==ModuleSlot.ModuleType.Autorepair)
+				ModuleSlot mod = slots[seats[curSeat].moduleSlots[0]];
+				if(mod.cooldown<=0)
 				{
-					health+=Time.deltaTime*ms.modules[0].power1*ms.modPower;
+					mod.cooldown=mod.modules[0].cooldown*mod.modCooldown;
+					mod.runtime=mod.modules[0].time*mod.modTime;
 				}
-				else if(ms.mtype==ModuleSlot.ModuleType.JumpDrive)
+			}
+			if(Input.GetButtonUp("Module2"))
+			{
+				ModuleSlot mod = slots[seats[curSeat].moduleSlots[1]];
+				if(mod.cooldown<=0)
 				{
-					if(ms.runtime<=0)
+					mod.cooldown=mod.modules[0].cooldown*mod.modCooldown;
+					mod.runtime=mod.modules[0].time*mod.modTime;
+				}
+			}
+			if(Input.GetButtonUp("Module3"))
+			{
+				ModuleSlot mod = slots[seats[curSeat].moduleSlots[2]];
+				if(mod.cooldown<=0)
+				{
+					mod.cooldown=mod.modules[0].cooldown*mod.modCooldown;
+					mod.runtime=mod.modules[0].time*mod.modTime;
+				}
+			}
+			if(Input.GetButtonUp("Module4"))
+			{
+				ModuleSlot mod = slots[seats[curSeat].moduleSlots[3]];
+				if(mod.cooldown<=0)
+				{
+					mod.cooldown=mod.modules[0].cooldown*mod.modCooldown;
+					mod.runtime=mod.modules[0].time*mod.modTime;
+				}
+			}
+			foreach(ModuleSlot ms in slots)
+			{
+				ms.cooldown-=Time.deltaTime;
+				if(ms.runtime>0)
+				{
+					ms.runtime-=Time.deltaTime;
+					if(ms.mtype==ModuleSlot.ModuleType.Autorepair)
 					{
-						transform.Translate(ms.modules[0].power1*ms.modules[0].transform.forward, Space.World);
+						health+=Time.deltaTime*ms.modules[0].power1*ms.modPower;
+					}
+					else if(ms.mtype==ModuleSlot.ModuleType.JumpDrive)
+					{
+						if(ms.runtime<=0)
+						{
+							transform.Translate(ms.modules[0].power1*ms.modules[0].transform.forward, Space.World);
+						}
+					}
+					else if(ms.mtype==ModuleSlot.ModuleType.Missile)
+					{
+						ms.runtime=-1;
+						GameObject bullet = (GameObject)Instantiate(ms.modules[0].go, ms.modules[0].transform1.position, ms.modules[0].transform1.rotation);
+						bullet.GetComponent<Rigidbody>().AddForce(bullet.transform.forward*ms.modules[0].time*ms.modTime);
 					}
 				}
-				else if(ms.mtype==ModuleSlot.ModuleType.Missile)
+			}
+			int heals = injurySlots;
+			foreach(Crew c in crewmembers)
+			{
+				if(c.j==Crew.Job.Engineer && c.injured==false && repairing)
 				{
-					ms.runtime=-1;
-					GameObject bullet = (GameObject)Instantiate(ms.modules[0].go, ms.modules[0].transform1.position, ms.modules[0].transform1.rotation);
-					bullet.GetComponent<Rigidbody>().AddForce(bullet.transform.forward*ms.modules[0].time*ms.modTime);
+					health+=repairSpeed*Time.deltaTime;
+				}
+				if(c.injured && heals>0)
+				{
+					heals-=1;
+					c.recoveryTime+=Time.deltaTime;
+					if(c.recoveryTime>30)
+					{
+						c.recoveryTime=0;
+						c.injured=false;
+					}
 				}
 			}
-		}
-		int heals = injurySlots;
-		foreach(Crew c in crewmembers)
-		{
-			if(c.j==Crew.Job.Engineer && c.injured==false && repairing)
+			if(health<0)
 			{
-				health+=repairSpeed*Time.deltaTime;
-			}
-			if(c.injured && heals>0)
-			{
-				heals-=1;
-				c.recoveryTime+=Time.deltaTime;
-				if(c.recoveryTime>30)
+				foreach(Block b in blocks)
 				{
-					c.recoveryTime=0;
-					c.injured=false;
+					b.OnShipDestroy();
+					b.transform.parent=null;
+					b.transform.SetParent(null);
+				}
+				Cursor.lockState=CursorLockMode.None;
+				Cursor.visible=true;
+				destroyed=true;
+			}
+			if(health>maxHealth)
+			{
+				health=maxHealth;
+				repairing=false;
+			}
+			foreach(PowerSystem ps in powerSys)
+			{
+				ps.energyStored+=(ps.energyPerSec-ps.passive)*Time.deltaTime;
+				if(ps.energyStored>ps.energyMax)
+					ps.energyStored=ps.energyMax;
+				if(ps.energyStored<0)
+					ps.energyStored=0;
+			}
+			foreach(WeaponPair w in wp)
+			{
+				w.UpdateState();
+			}
+			if(Input.GetButton("Fire1"))
+			{
+				wp[seats[curSeat].weaponSet].Fire(true);
+			}
+			if(Input.GetButtonUp("Fire1"))
+			{
+				wp[seats[curSeat].weaponSet].Fire(false);
+			}
+			if(Input.GetButtonUp("Reload"))
+			{
+				wp[seats[curSeat].weaponSet].Reload();
+			}
+			if(Input.GetButton("Fire2"))
+			{
+				Cursor.lockState=CursorLockMode.Locked;
+				Cursor.visible=false;
+			}
+			if(Input.GetButtonUp("Pause"))
+			{
+				Cursor.lockState=CursorLockMode.None;
+				Cursor.visible=true;
+			}
+			foreach(ThrusterGroup tg in tgs)
+			{
+				float tgx = Input.GetAxis(tg.axis);
+				if(tgx>0)
+				{
+					for(int i = 0; i<tg.posThrust.Count; i++)
+					{
+						shipBody.AddForceAtPosition(tg.posThrust[i].transform.forward*tg.posThrust[i].force*Time.deltaTime, tg.posThrust[i].transform.position);
+						tg.posThrust[i].burn.localScale = new Vector3(1, Mathf.Abs(tgx)+.1f, 1);
+						tg.posThrust[i].burnLight.range = tg.posThrust[i].range*Mathf.Abs(tgx+.1f);
+						tg.posThrust[i].time=Mathf.Abs(tgx);
+					}
+				}
+				else
+				{
+					for(int i = 0; i<tg.posThrust.Count; i++)
+					{
+						tg.posThrust[i].burn.localScale = new Vector3(1, 0.1f, 1);
+						tg.posThrust[i].burnLight.range = tg.posThrust[i].range*0.1f;
+						tg.posThrust[i].time=0;
+					}
+				}
+				if(tgx<0)
+				{
+					for(int i = 0; i<tg.negThrust.Count; i++)
+					{
+						shipBody.AddForceAtPosition(tg.negThrust[i].transform.forward*tg.negThrust[i].force*Time.deltaTime, tg.negThrust[i].transform.position);
+						tg.negThrust[i].burn.localScale = new Vector3(1, Mathf.Abs(tgx), 1);
+						tg.negThrust[i].burnLight.range = tg.negThrust[i].range*Mathf.Abs(tgx+.1f);
+						tg.negThrust[i].time=Mathf.Abs(tgx);
+					}
+				}
+				else
+				{
+					for(int i = 0; i<tg.negThrust.Count; i++)
+					{
+						tg.negThrust[i].burn.localScale = new Vector3(1, 0.1f, 1);
+						tg.negThrust[i].burnLight.range = tg.negThrust[i].range*0.1f;
+						tg.negThrust[i].time=0;
+					}
 				}
 			}
-		}
-		if(health<0)
-			health=0;
-		if(health>maxHealth)
-		{
-			health=maxHealth;
-			repairing=false;
-		}
-		foreach(PowerSystem ps in powerSys)
-		{
-			ps.energyStored+=(ps.energyPerSec-ps.passive)*Time.deltaTime;
-			if(ps.energyStored>ps.energyMax)
-				ps.energyStored=ps.energyMax;
-			if(ps.energyStored<0)
-				ps.energyStored=0;
-		}
-		foreach(WeaponPair w in wp)
-		{
-			w.UpdateState();
-		}
-		if(Input.GetButton("Fire1"))
-		{
-			Cursor.lockState=CursorLockMode.Locked;
-			Cursor.visible=false;
-			wp[seats[curSeat].weaponSet].Fire(true);
-		}
-		if(Input.GetButtonUp("Fire1"))
-		{
-			wp[seats[curSeat].weaponSet].Fire(false);
-		}
-		if(Input.GetButtonUp("Reload"))
-		{
-			wp[seats[curSeat].weaponSet].Reload();
-		}
-		if(Input.GetButton("Fire2"))
-		{
-			Cursor.lockState=CursorLockMode.Locked;
-			Cursor.visible=false;
-		}
-		if(Input.GetButtonUp("Pause"))
-		{
-			Cursor.lockState=CursorLockMode.None;
-			Cursor.visible=true;
-		}
-		foreach(ThrusterGroup tg in tgs)
-		{
-			float tgx = Input.GetAxis(tg.axis);
-			if(tgx>0)
+			WeaponPair wpp = wp[seats[curSeat].weaponSet];
+			if(wpp.secondaryActive)
 			{
-				for(int i = 0; i<tg.posThrust.Count; i++)
+				foreach(Weapon w in wpp.weapons2)
 				{
-					shipBody.AddForceAtPosition(tg.posThrust[i].transform.forward*tg.posThrust[i].force*Time.deltaTime, tg.posThrust[i].transform.position);
-					tg.posThrust[i].burn.localScale = new Vector3(1, Mathf.Abs(tgx)+.1f, 1);
-					tg.posThrust[i].burnLight.range = tg.posThrust[i].range*Mathf.Abs(tgx+.1f);
-					tg.posThrust[i].time=Mathf.Abs(tgx);
+					w.LookAt(seats[curSeat].weaponTarget);
+					w.active=true;
+				}
+				foreach(Weapon w in wpp.weapons1)
+				{
+					w.active=false;
 				}
 			}
 			else
 			{
-				for(int i = 0; i<tg.posThrust.Count; i++)
+				foreach(Weapon w in wpp.weapons1)
 				{
-					tg.posThrust[i].burn.localScale = new Vector3(1, 0.1f, 1);
-					tg.posThrust[i].burnLight.range = tg.posThrust[i].range*0.1f;
-					tg.posThrust[i].time=0;
+					w.LookAt(seats[curSeat].weaponTarget);
+					w.active=true;
 				}
-			}
-			if(tgx<0)
-			{
-				for(int i = 0; i<tg.negThrust.Count; i++)
+				foreach(Weapon w in wpp.weapons2)
 				{
-					shipBody.AddForceAtPosition(tg.negThrust[i].transform.forward*tg.negThrust[i].force*Time.deltaTime, tg.negThrust[i].transform.position);
-					tg.negThrust[i].burn.localScale = new Vector3(1, Mathf.Abs(tgx), 1);
-					tg.negThrust[i].burnLight.range = tg.negThrust[i].range*Mathf.Abs(tgx+.1f);
-					tg.negThrust[i].time=Mathf.Abs(tgx);
-				}
-			}
-			else
-			{
-				for(int i = 0; i<tg.negThrust.Count; i++)
-				{
-					tg.negThrust[i].burn.localScale = new Vector3(1, 0.1f, 1);
-					tg.negThrust[i].burnLight.range = tg.negThrust[i].range*0.1f;
-					tg.negThrust[i].time=0;
+					w.active=false;
 				}
 			}
 		}
-		WeaponPair wpp = wp[seats[curSeat].weaponSet];
-		if(wpp.secondaryActive)
+		if(destroyed)
 		{
-			foreach(Weapon w in wpp.weapons2)
+			lifetime-=Time.deltaTime;
+			if(lifetime<=0)
 			{
-				w.LookAt(seats[curSeat].weaponTarget);
-				w.active=true;
-			}
-			foreach(Weapon w in wpp.weapons1)
-			{
-				w.active=false;
-			}
-		}
-		else
-		{
-			foreach(Weapon w in wpp.weapons1)
-			{
-				w.LookAt(seats[curSeat].weaponTarget);
-				w.active=true;
-			}
-			foreach(Weapon w in wpp.weapons2)
-			{
-				w.active=false;
+				Destroy(this.gameObject);
 			}
 		}
 	}
