@@ -33,10 +33,11 @@ public class AuxPowerSlot
 [System.Serializable]
 public class ModuleSlot
 {
+	public string name;
 	public List<Module> modules;
 	public List<int> groups;
 	public float modPower,modTime,modCooldown;
-	public enum ModuleType {Autorepair=0, JumpDrive=1, Missile=2}
+	public enum ModuleType {AutoRepair=0, JumpDrive=1, Missile=2}
 	public ModuleType mtype;
 	public float cooldown,runtime;
 	public bool active;
@@ -45,6 +46,7 @@ public class ModuleSlot
 [System.Serializable]
 public class WeaponPair
 {
+	public string name;
 	public List<Weapon> weapons1,weapons2;
 	public bool secondaryActive;
 	public int ammo1,ammoMax1,ammo2,ammoMax2;
@@ -516,12 +518,58 @@ public class ShipScript : MonoBehaviour
 	public bool destroyed = false;
 	public float lifetime = 5;
 
+	void FixedUpdate()
+	{
+		Quaternion q = Quaternion.FromToRotation(transform.up, Vector3.up);
+		shipBody.AddTorque(new Vector3(q.x, q.y, q.z)*dampenSpeed);
+		foreach(ThrusterGroup tg in tgs)
+		{
+			float tgx = Input.GetAxis(tg.axis);
+			if(tgx>0)
+			{
+				for(int i = 0; i<tg.posThrust.Count; i++)
+				{
+					shipBody.AddForceAtPosition(tg.posThrust[i].transform.forward*tg.posThrust[i].force*Time.deltaTime, tg.posThrust[i].transform.position);
+					tg.posThrust[i].burn.localScale = new Vector3(1, Mathf.Abs(tgx)+.1f, 1);
+					tg.posThrust[i].burnLight.range = tg.posThrust[i].range*Mathf.Abs(tgx+.1f);
+					tg.posThrust[i].time=Mathf.Abs(tgx);
+				}
+			}
+			else
+			{
+				for(int i = 0; i<tg.posThrust.Count; i++)
+				{
+					tg.posThrust[i].burn.localScale = new Vector3(1, 0.1f, 1);
+					tg.posThrust[i].burnLight.range = tg.posThrust[i].range*0.1f;
+					tg.posThrust[i].time=0;
+				}
+			}
+			if(tgx<0)
+			{
+				for(int i = 0; i<tg.negThrust.Count; i++)
+				{
+					shipBody.AddForceAtPosition(tg.negThrust[i].transform.forward*tg.negThrust[i].force*Time.deltaTime, tg.negThrust[i].transform.position);
+					tg.negThrust[i].burn.localScale = new Vector3(1, Mathf.Abs(tgx), 1);
+					tg.negThrust[i].burnLight.range = tg.negThrust[i].range*Mathf.Abs(tgx+.1f);
+					tg.negThrust[i].time=Mathf.Abs(tgx);
+				}
+			}
+			else
+			{
+				for(int i = 0; i<tg.negThrust.Count; i++)
+				{
+					tg.negThrust[i].burn.localScale = new Vector3(1, 0.1f, 1);
+					tg.negThrust[i].burnLight.range = tg.negThrust[i].range*0.1f;
+					tg.negThrust[i].time=0;
+				}
+			}
+		}
+	}
+
 	void Update()
 	{
 		if(!destroyed)
 		{
-			Quaternion q = Quaternion.FromToRotation(transform.up, Vector3.up);
-			shipBody.AddTorque(new Vector3(q.x, q.y, q.z)*dampenSpeed);
 			timeSinceDamage+=Time.deltaTime;
 			if(health<maxHealth && timeSinceDamage>=repairDelay)
 			{
@@ -573,7 +621,7 @@ public class ShipScript : MonoBehaviour
 				if(ms.runtime>0)
 				{
 					ms.runtime-=Time.deltaTime;
-					if(ms.mtype==ModuleSlot.ModuleType.Autorepair)
+					if(ms.mtype==ModuleSlot.ModuleType.AutoRepair)
 					{
 						health+=Time.deltaTime*ms.modules[0].power1*ms.modPower;
 					}
@@ -660,48 +708,6 @@ public class ShipScript : MonoBehaviour
 			{
 				Cursor.lockState=CursorLockMode.None;
 				Cursor.visible=true;
-			}
-			foreach(ThrusterGroup tg in tgs)
-			{
-				float tgx = Input.GetAxis(tg.axis);
-				if(tgx>0)
-				{
-					for(int i = 0; i<tg.posThrust.Count; i++)
-					{
-						shipBody.AddForceAtPosition(tg.posThrust[i].transform.forward*tg.posThrust[i].force*Time.deltaTime, tg.posThrust[i].transform.position);
-						tg.posThrust[i].burn.localScale = new Vector3(1, Mathf.Abs(tgx)+.1f, 1);
-						tg.posThrust[i].burnLight.range = tg.posThrust[i].range*Mathf.Abs(tgx+.1f);
-						tg.posThrust[i].time=Mathf.Abs(tgx);
-					}
-				}
-				else
-				{
-					for(int i = 0; i<tg.posThrust.Count; i++)
-					{
-						tg.posThrust[i].burn.localScale = new Vector3(1, 0.1f, 1);
-						tg.posThrust[i].burnLight.range = tg.posThrust[i].range*0.1f;
-						tg.posThrust[i].time=0;
-					}
-				}
-				if(tgx<0)
-				{
-					for(int i = 0; i<tg.negThrust.Count; i++)
-					{
-						shipBody.AddForceAtPosition(tg.negThrust[i].transform.forward*tg.negThrust[i].force*Time.deltaTime, tg.negThrust[i].transform.position);
-						tg.negThrust[i].burn.localScale = new Vector3(1, Mathf.Abs(tgx), 1);
-						tg.negThrust[i].burnLight.range = tg.negThrust[i].range*Mathf.Abs(tgx+.1f);
-						tg.negThrust[i].time=Mathf.Abs(tgx);
-					}
-				}
-				else
-				{
-					for(int i = 0; i<tg.negThrust.Count; i++)
-					{
-						tg.negThrust[i].burn.localScale = new Vector3(1, 0.1f, 1);
-						tg.negThrust[i].burnLight.range = tg.negThrust[i].range*0.1f;
-						tg.negThrust[i].time=0;
-					}
-				}
 			}
 			WeaponPair wpp = wp[seats[curSeat].weaponSet];
 			if(wpp.secondaryActive)

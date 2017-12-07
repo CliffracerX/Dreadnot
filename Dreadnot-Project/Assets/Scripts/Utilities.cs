@@ -36,4 +36,19 @@ public class Utilities
 		else if (angle > max) return max;
 		else return angle;
 	}
+
+	public static float NearestRound(float x, float delX)
+	{
+		if (delX < 1)
+		{
+			float i = (float)System.Math.Floor(x);
+			float x2 = i;
+			while ((x2 += delX) < x) ;
+			float x1 = x2 - delX;
+			return (System.Math.Abs(x - x1) < System.Math.Abs(x - x2)) ? x1 : x2;
+		}
+		else {
+			return (float)System.Math.Round(x / delX, System.MidpointRounding.AwayFromZero) * delX;
+		}
+	}
 }

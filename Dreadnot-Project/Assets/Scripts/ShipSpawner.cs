@@ -44,6 +44,10 @@ public class ShipSpawner : MonoBehaviour
 		{
 			modules.Add(moduleNames[i], moduleTypes[i]);
 		}
+		if(PlayerPrefs.HasKey("ShipPath"))
+		{
+			shipPath=PlayerPrefs.GetString("ShipPath");
+		}
 	}
 
 	void OnGUI()
@@ -54,6 +58,11 @@ public class ShipSpawner : MonoBehaviour
 			if(GUI.Button(new Rect(15, 40, Screen.width-30, 25), "SPAWN SHIP"))
 			{
 				spawnPlayer=true;
+				PlayerPrefs.SetString("ShipPath", shipPath);
+			}
+			if(GUI.Button(new Rect(15, Screen.height-40, Screen.width-30, 25), "BACK TO MENU"))
+			{
+				Application.LoadLevel("SceneMenu");
 			}
 		}
 	}
@@ -172,6 +181,9 @@ public class ShipSpawner : MonoBehaviour
 		ss.wp = new List<WeaponPair>();
 		for(int i = 0; i<numWeps; i++)
 		{
+			string wepSetName = strings[offset];
+			print(strings[offset]);
+			offset+=1;
 			string weaponPrimary = strings[offset];
 			print(strings[offset]);
 			offset+=1;
@@ -191,6 +203,7 @@ public class ShipSpawner : MonoBehaviour
 			wp.reloadSpeed1=wep1.reloadSpeed;
 			wp.firerate2=wep2.firerate;
 			wp.reloadSpeed2=wep2.reloadSpeed;
+			wp.name=wepSetName;
 			ss.wp.Add(wp);
 		}
 		int numPowerSys = int.Parse(strings[offset]);
@@ -199,10 +212,14 @@ public class ShipSpawner : MonoBehaviour
 		ss.powerSys = new List<PowerSystem>();
 		for(int i = 0; i<numPowerSys; i++)
 		{
+			string powName = strings[offset];
+			print(strings[offset]);
+			offset+=1;
 			int numModules = int.Parse(strings[offset]);
 			print(strings[offset]);
 			offset+=1;
 			PowerSystem ps = new PowerSystem();
+			ps.name=powName;
 			ps.slots = new List<AuxPowerSlot>();
 			for(int n = 0; n<numModules; n++)
 			{
@@ -236,6 +253,9 @@ public class ShipSpawner : MonoBehaviour
 		ss.slots = new List<ModuleSlot>();
 		for(int i = 0; i<numModulesReal; i++)
 		{
+			string modName = strings[offset];
+			print(strings[offset]);
+			offset+=1;
 			string modType = strings[offset];
 			print(strings[offset]);
 			offset+=1;
@@ -252,6 +272,7 @@ public class ShipSpawner : MonoBehaviour
 			float time = 1 + (timePower-10)*0.1f;
 			float cool = 1 + (coolPower-20)*-0.025f;
 			ModuleSlot ms = new ModuleSlot();
+			ms.name=modName;
 			ms.modPower=power;
 			ms.modTime=time;
 			ms.modCooldown=cool;
@@ -322,5 +343,6 @@ public class ShipSpawner : MonoBehaviour
 				t.posNeg=int.Parse(bb[5])==1;
 			}
 		}
+		sr.Close();
 	}
 }
